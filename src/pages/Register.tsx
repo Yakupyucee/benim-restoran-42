@@ -43,7 +43,7 @@ const Register = () => {
     setIsSubmitting(true);
     
     try {
-      const success = await register(name, email, phone, password);
+      const success = await register(name, email, phone, password, confirmPassword);
       if (success) {
         navigate("/giris");
       }

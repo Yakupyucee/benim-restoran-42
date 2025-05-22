@@ -1,41 +1,25 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { authAPI } from "@/services/api";
 
 interface User {
-  id: string;
+  user_id: string;
   name: string;
   email: string;
   phone?: string;
   role: "user" | "admin";
+  token: string;
 }
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   login: (email: string, password: string) => Promise<boolean>;
-  register: (name: string, email: string, phone: string, password: string) => Promise<boolean>;
+  register: (name: string, email: string, phone: string, password: string, passwordConfirm: string) => Promise<boolean>;
   logout: () => void;
   isLoading: boolean;
 }
-
-// Demo kullanıcılar
-const DEMO_USERS = [
-  {
-    id: "1",
-    name: "Demo Kullanıcı",
-    email: "demo@example.com",
-    password: "demo123",
-    role: "user" as const,
-  },
-  {
-    id: "2",
-    name: "Admin Kullanıcı",
-    email: "admin@example.com", 
-    password: "admin123",
-    role: "admin" as const,
-  },
-];
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -56,26 +40,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // Demo amaçlı giriş simülasyonu
     setIsLoading(true);
     
     try {
-      // Gerçek bir API çağrısını simüle etmek için kısa bir gecikme
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      const response = await authAPI.login({ email, password });
       
-      const foundUser = DEMO_USERS.find(
-        (u) => u.email === email && u.password === password
-      );
-      
-      if (foundUser) {
-        const { password, ...userWithoutPassword } = foundUser;
-        setUser(userWithoutPassword);
+      if (response && response.access) {
+        const userData = {
+          user_id: response.user.user_id,
+          name: response.user.name,
+          email: response.user.email,
+          phone: response.user.phone,
+          role: response.user.role,
+          token: response.access
+        };
+        
+        setUser(userData);
         setIsAuthenticated(true);
-        localStorage.setItem("user", JSON.stringify(userWithoutPassword));
         toast.success("Giriş başarılı!");
         return true;
       } else {
-        toast.error("Geçersiz e-posta veya şifre!");
+        toast.error("Giriş bilgileri geçersiz!");
         return false;
       }
     } catch (error) {
@@ -91,24 +76,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     name: string,
     email: string,
     phone: string,
-    password: string
+    password: string,
+    passwordConfirm: string
   ): Promise<boolean> => {
     setIsLoading(true);
     
     try {
-      // Gerçek bir API çağrısını simüle etmek için kısa bir gecikme
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await authAPI.register({
+        name,
+        email,
+        phone,
+        password,
+        password_confirm: passwordConfirm
+      });
       
-      // E-posta zaten kullanımda mı kontrolü
-      const existingUser = DEMO_USERS.find((u) => u.email === email);
-      
-      if (existingUser) {
-        toast.error("Bu e-posta adresi zaten kullanımda!");
-        return false;
-      }
-      
-      // Normalde burada API'ye bir istekte bulunulur
-      // Şimdilik sadece başarılı bir kayıt simüle edelim
       toast.success("Kayıt başarılı! Şimdi giriş yapabilirsiniz.");
       return true;
     } catch (error) {
@@ -120,11 +101,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem("user");
-    toast.info("Çıkış yapıldı");
+  const logout = async () => {
+    setIsLoading(true);
+    try {
+      await authAPI.logout();
+      setUser(null);
+      setIsAuthenticated(false);
+      toast.info("Çıkış yapıldı");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Çıkış yapılırken bir hata oluştu!");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

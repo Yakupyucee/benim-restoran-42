@@ -100,10 +100,10 @@ const Login = () => {
             </p>
             <div className="bg-gray-50 p-4 rounded-md text-sm">
               <p className="mb-2">
-                <strong>Normal Kullanıcı:</strong> demo@example.com / demo123
+                <strong>Kullanıcı:</strong> tempuser7@gmail.com / Guclu_Sifre123
               </p>
               <p>
-                <strong>Admin:</strong> admin@example.com / admin123
+                <strong>Admin:</strong> tempuser8@gmail.com / Guclu_Sifre123
               </p>
             </div>
           </div>
