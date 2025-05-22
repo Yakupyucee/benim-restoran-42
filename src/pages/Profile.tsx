@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Link, Navigate } from "react-router-dom";
 import { toast } from "sonner";
-import { authAPI, addressAPI, orderAPI } from "@/services/api";
+import { authAPI, addressAPI, orderAPI, menuAPI } from "@/services/api";
 
 interface Address {
   address_id: string;
@@ -21,6 +21,7 @@ interface OrderItem {
   food_id: string;
   quantity: number;
   price: string;
+  name?: string; // Yemek adını tutacak alan ekledik
 }
 
 interface Order {
@@ -36,11 +37,23 @@ interface Order {
   items: OrderItem[];
 }
 
+interface MenuItem {
+  food_id: string;
+  name: string;
+  price_dine_in: string;
+  price_takeaway: string;
+  description: string;
+  category: string;
+  image: string | null;
+  availability: boolean;
+}
+
 const Profile = () => {
   const { isAuthenticated, user } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [menuItems, setMenuItems] = useState<{[key: string]: MenuItem}>({});
   const [loading, setLoading] = useState(true);
   
   // Form state
@@ -77,7 +90,31 @@ const Profile = () => {
       
       // Siparişler
       const ordersData = await orderAPI.getAllOrders();
-      setOrders(ordersData);
+      
+      // Menü öğelerini al
+      const menuData = await menuAPI.getAllFoods();
+      const menuMap = menuData.reduce((acc: {[key: string]: MenuItem}, item: MenuItem) => {
+        acc[item.food_id] = item;
+        return acc;
+      }, {});
+      setMenuItems(menuMap);
+      
+      // Siparişlerdeki ürünlere isim ekle
+      const ordersWithFoodNames = ordersData.map((order: Order) => {
+        const itemsWithNames = order.items.map(item => {
+          const menuItem = menuMap[item.food_id];
+          return {
+            ...item,
+            name: menuItem ? menuItem.name : "Bilinmeyen Ürün"
+          };
+        });
+        return {
+          ...order,
+          items: itemsWithNames
+        };
+      });
+      
+      setOrders(ordersWithFoodNames);
     } catch (error) {
       console.error("Kullanıcı verileri yüklenirken hata:", error);
       toast.error("Kullanıcı bilgileriniz yüklenemedi");
@@ -89,6 +126,15 @@ const Profile = () => {
   if (!isAuthenticated || !user) {
     return <Navigate to="/giris" replace />;
   }
+  
+  // Siparişleri durumlarına göre grupla
+  const activeOrders = orders.filter(order => 
+    order.order_status === "pending" || order.order_status === "preparing"
+  );
+  
+  const completedOrders = orders.filter(order => 
+    order.order_status === "completed" || order.order_status === "cancelled"
+  );
   
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -418,65 +464,144 @@ const Profile = () => {
                         </Link>
                       </div>
                     ) : (
-                      <div className="space-y-4">
-                        {orders.map((order) => (
-                          <div key={order.order_id} className="border rounded-lg overflow-hidden">
-                            <div className="bg-gray-50 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-                              <div>
-                                <div className="flex items-center mb-1">
-                                  <span className="font-semibold mr-2">Sipariş No:</span>
-                                  <span>{order.order_id}</span>
-                                </div>
-                                <div className="flex items-center">
-                                  <span className="text-gray-600 text-sm">
-                                    {formatDate(order.created_at)}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="mt-2 sm:mt-0">
-                                <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(order.order_status)}`}>
-                                  {getStatusText(order.order_status)}
-                                </span>
-                              </div>
-                            </div>
-                            
-                            <div className="p-4">
-                              <div className="mb-4">
-                                {order.items.map((item, idx) => (
-                                  <div key={idx} className="flex justify-between items-center py-2 border-b last:border-0">
+                      <div className="space-y-6">
+                        {/* Aktif Siparişler (Beklemede veya Hazırlanıyor) */}
+                        {activeOrders.length > 0 && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-3 text-restaurant-700">
+                              Aktif Siparişleriniz
+                            </h3>
+                            <div className="space-y-4">
+                              {activeOrders.map((order) => (
+                                <div key={order.order_id} className="border rounded-lg overflow-hidden">
+                                  <div className="bg-gray-50 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                     <div>
-                                      <span className="font-medium">{item.food_id}</span>
-                                      <span className="text-gray-600 ml-2">x{item.quantity}</span>
+                                      <div className="flex items-center mb-1">
+                                        <span className="font-semibold mr-2">Sipariş No:</span>
+                                        <span>{order.order_id.substring(0, 8)}...</span>
+                                      </div>
+                                      <div className="flex items-center">
+                                        <span className="text-gray-600 text-sm">
+                                          {formatDate(order.created_at)}
+                                        </span>
+                                      </div>
                                     </div>
-                                    <span>{parseFloat(item.price) * item.quantity} ₺</span>
+                                    <div className="mt-2 sm:mt-0">
+                                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(order.order_status)}`}>
+                                        {getStatusText(order.order_status)}
+                                      </span>
+                                    </div>
                                   </div>
-                                ))}
-                              </div>
-                              
-                              <div className="flex flex-col sm:flex-row justify-between border-t pt-4">
-                                <div>
-                                  <p className="font-semibold mb-1">Sipariş Tipi</p>
-                                  <p className="text-gray-700">{order.order_type === "dine_in" ? "Restoranda" : "Eve Sipariş"}</p>
-                                  {order.order_type === "dine_in" && order.table_number && (
-                                    <p className="text-gray-600 text-sm">Masa: {order.table_number}</p>
-                                  )}
-                                  {order.order_type === "takeaway" && order.delivery_address && (
-                                    <p className="text-gray-600 text-sm">
-                                      Adres ID: {order.delivery_address}
-                                    </p>
-                                  )}
+                                  
+                                  <div className="p-4">
+                                    <div className="mb-4">
+                                      {order.items.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between items-center py-2 border-b last:border-0">
+                                          <div>
+                                            <span className="font-medium">{item.name || "Bilinmeyen Ürün"}</span>
+                                            <span className="text-gray-600 ml-2">x{item.quantity}</span>
+                                          </div>
+                                          <span>{parseFloat(item.price) * item.quantity} ₺</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    
+                                    <div className="flex flex-col sm:flex-row justify-between border-t pt-4">
+                                      <div>
+                                        <p className="font-semibold mb-1">Sipariş Tipi</p>
+                                        <p className="text-gray-700">{order.order_type === "dine_in" ? "Restoranda" : "Eve Sipariş"}</p>
+                                        {order.order_type === "dine_in" && order.table_number && (
+                                          <p className="text-gray-600 text-sm">Masa: {order.table_number}</p>
+                                        )}
+                                        {order.order_type === "takeaway" && order.delivery_address && (
+                                          <p className="text-gray-600 text-sm">
+                                            Adres ID: {order.delivery_address}
+                                          </p>
+                                        )}
+                                      </div>
+                                      
+                                      <div className="mt-4 sm:mt-0 text-right">
+                                        <p className="font-semibold mb-1">Toplam Tutar</p>
+                                        <p className="text-xl font-bold text-restaurant-700">
+                                          {parseFloat(order.total_price).toFixed(2)} ₺
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
-                                
-                                <div className="mt-4 sm:mt-0 text-right">
-                                  <p className="font-semibold mb-1">Toplam Tutar</p>
-                                  <p className="text-xl font-bold text-restaurant-700">
-                                    {parseFloat(order.total_price).toFixed(2)} ₺
-                                  </p>
-                                </div>
-                              </div>
+                              ))}
                             </div>
                           </div>
-                        ))}
+                        )}
+
+                        {/* Tamamlanmış veya İptal Edilmiş Siparişler */}
+                        {completedOrders.length > 0 && (
+                          <div>
+                            <h3 className="text-lg font-semibold mb-3 pb-2 border-b">
+                              Önceki Siparişleriniz
+                            </h3>
+                            <div className="space-y-4">
+                              {completedOrders.map((order) => (
+                                <div key={order.order_id} className="border rounded-lg overflow-hidden">
+                                  <div className="bg-gray-50 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                                    <div>
+                                      <div className="flex items-center mb-1">
+                                        <span className="font-semibold mr-2">Sipariş No:</span>
+                                        <span>{order.order_id.substring(0, 8)}...</span>
+                                      </div>
+                                      <div className="flex items-center">
+                                        <span className="text-gray-600 text-sm">
+                                          {formatDate(order.created_at)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className="mt-2 sm:mt-0">
+                                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(order.order_status)}`}>
+                                        {getStatusText(order.order_status)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="p-4">
+                                    <div className="mb-4">
+                                      {order.items.map((item, idx) => (
+                                        <div key={idx} className="flex justify-between items-center py-2 border-b last:border-0">
+                                          <div>
+                                            <span className="font-medium">{item.name || "Bilinmeyen Ürün"}</span>
+                                            <span className="text-gray-600 ml-2">x{item.quantity}</span>
+                                          </div>
+                                          <span>{parseFloat(item.price) * item.quantity} ₺</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    
+                                    <div className="flex flex-col sm:flex-row justify-between border-t pt-4">
+                                      <div>
+                                        <p className="font-semibold mb-1">Sipariş Tipi</p>
+                                        <p className="text-gray-700">{order.order_type === "dine_in" ? "Restoranda" : "Eve Sipariş"}</p>
+                                        {order.order_type === "dine_in" && order.table_number && (
+                                          <p className="text-gray-600 text-sm">Masa: {order.table_number}</p>
+                                        )}
+                                        {order.order_type === "takeaway" && order.delivery_address && (
+                                          <p className="text-gray-600 text-sm">
+                                            Adres ID: {order.delivery_address}
+                                          </p>
+                                        )}
+                                      </div>
+                                      
+                                      <div className="mt-4 sm:mt-0 text-right">
+                                        <p className="font-semibold mb-1">Toplam Tutar</p>
+                                        <p className="text-xl font-bold text-restaurant-700">
+                                          {parseFloat(order.total_price).toFixed(2)} ₺
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
