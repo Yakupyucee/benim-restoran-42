@@ -20,7 +20,7 @@ interface Address {
 
 const Order = () => {
   const { isAuthenticated, user } = useAuth();
-  const { items, clearCart, calculateTotal } = useCart();
+  const { items, clearCart, getTotalPrice } = useCart(); // Changed from calculateTotal to getTotalPrice
   const navigate = useNavigate();
   
   const [orderType, setOrderType] = useState<"takeaway" | "dine_in">("takeaway");
@@ -85,7 +85,7 @@ const Order = () => {
       setIsLoading(true);
       
       const orderData = {
-        total_price: calculateTotal(),
+        total_price: getTotalPrice(), // Changed from calculateTotal() to getTotalPrice()
         order_status: "pending",
         payment_method: paymentMethod,
         order_type: orderType,
@@ -182,7 +182,7 @@ const Order = () => {
                         Toplam Tutar:
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-lg font-bold text-restaurant-700">{calculateTotal().toFixed(2)} ₺</div>
+                        <div className="text-lg font-bold text-restaurant-700">{getTotalPrice().toFixed(2)} ₺</div>
                       </td>
                     </tr>
                   </tfoot>
