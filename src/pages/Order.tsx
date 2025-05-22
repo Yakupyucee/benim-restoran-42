@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/layouts/main-layout";
 import { Button } from "@/components/ui/button";
@@ -136,7 +137,7 @@ const Order = () => {
         return {
           food_id: item.id,
           quantity: item.quantity,
-          price: parseFloat(price)
+          price: parseFloat(price.toString()) // Ensure price is converted to string before parsing as float
         };
       });
       
