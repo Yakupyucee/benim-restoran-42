@@ -76,8 +76,7 @@ const Menu = () => {
       id: item.food_id,
       name: item.name,
       price: parseFloat(item.price_dine_in),
-      image: item.image || "/placeholder.svg",
-      quantity: 1
+      image: item.image || "/placeholder.svg"
     });
   };
 
