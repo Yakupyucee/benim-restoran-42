@@ -1,11 +1,10 @@
-
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/layouts/main-layout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
-import { addressAPI, orderAPI } from "@/services/api";
+import { addressAPI, orderAPI, menuAPI } from "@/services/api";
 import { toast } from "sonner";
 import { Navigate, useNavigate } from "react-router-dom";
 
@@ -18,9 +17,17 @@ interface Address {
   created_at: string;
 }
 
+interface MenuItem {
+  food_id: string;
+  name: string;
+  price_dine_in: string;
+  price_takeaway: string;
+  // ... other properties
+}
+
 const Order = () => {
   const { isAuthenticated, user } = useAuth();
-  const { items, clearCart, getTotalPrice } = useCart(); // Changed from calculateTotal to getTotalPrice
+  const { items, clearCart, getTotalPrice } = useCart();
   const navigate = useNavigate();
   
   const [orderType, setOrderType] = useState<"takeaway" | "dine_in">("takeaway");
@@ -29,6 +36,7 @@ const Order = () => {
   const [selectedAddress, setSelectedAddress] = useState<string>("");
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card">("cash");
   const [isLoading, setIsLoading] = useState(false);
+  const [menuItems, setMenuItems] = useState<{[key: string]: MenuItem}>({});
   const [newAddress, setNewAddress] = useState({
     street: "",
     city: "",
@@ -39,6 +47,7 @@ const Order = () => {
   useEffect(() => {
     if (isAuthenticated) {
       fetchAddresses();
+      fetchMenuItems();
     }
   }, [isAuthenticated]);
 
@@ -53,6 +62,39 @@ const Order = () => {
       console.error("Adresler alınırken hata oluştu:", error);
       toast.error("Adresleriniz yüklenirken bir hata oluştu");
     }
+  };
+
+  const fetchMenuItems = async () => {
+    try {
+      const menuData = await menuAPI.getAllFoods();
+      // Yemek öğelerini food_id'ye göre haritala
+      const menuMap = menuData.reduce((acc: {[key: string]: MenuItem}, item: MenuItem) => {
+        acc[item.food_id] = item;
+        return acc;
+      }, {});
+      setMenuItems(menuMap);
+    } catch (error) {
+      console.error("Menü öğeleri alınırken hata oluştu:", error);
+      toast.error("Menü bilgileri yüklenirken bir hata oluştu");
+    }
+  };
+
+  // Sipariş tipine göre toplam tutarı hesapla
+  const calculateOrderTotal = () => {
+    if (Object.keys(menuItems).length === 0) {
+      return getTotalPrice();
+    }
+
+    return items.reduce((total, item) => {
+      const menuItem = menuItems[item.id];
+      if (menuItem) {
+        const price = orderType === "dine_in" 
+          ? parseFloat(menuItem.price_dine_in) 
+          : parseFloat(menuItem.price_takeaway);
+        return total + price * item.quantity;
+      }
+      return total + item.price * item.quantity;
+    }, 0);
   };
 
   const handleCreateAddress = async (e: React.FormEvent) => {
@@ -84,16 +126,26 @@ const Order = () => {
     try {
       setIsLoading(true);
       
+      // Sipariş tipi ve fiyatlara göre öğeleri hazırla
+      const orderItems = items.map(item => {
+        const menuItem = menuItems[item.id];
+        const price = menuItem 
+          ? (orderType === "dine_in" ? parseFloat(menuItem.price_dine_in) : parseFloat(menuItem.price_takeaway))
+          : item.price.toString();
+        
+        return {
+          food_id: item.id,
+          quantity: item.quantity,
+          price: parseFloat(price)
+        };
+      });
+      
       const orderData = {
-        total_price: getTotalPrice(), // Changed from calculateTotal() to getTotalPrice()
+        total_price: calculateOrderTotal(),
         order_status: "pending",
         payment_method: paymentMethod,
         order_type: orderType,
-        items: items.map(item => ({
-          food_id: item.id,
-          quantity: item.quantity,
-          price: item.price
-        }))
+        items: orderItems
       };
       
       if (orderType === "takeaway") {
@@ -119,6 +171,8 @@ const Order = () => {
     return <Navigate to="/giris" replace />;
   }
 
+  const orderTotal = calculateOrderTotal();
+
   return (
     <MainLayout>
       <div className="max-w-4xl mx-auto py-8 px-4">
@@ -141,7 +195,7 @@ const Order = () => {
                         Ürün
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Fiyat
+                        Fiyat ({orderType === "dine_in" ? "Restoran" : "Paket"})
                       </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Adet
@@ -152,29 +206,36 @@ const Order = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {items.map((item) => (
-                      <tr key={item.id}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="h-10 w-10 flex-shrink-0">
-                              <img className="h-10 w-10 rounded-full object-cover" src={item.image} alt={item.name} />
+                    {items.map((item) => {
+                      const menuItem = menuItems[item.id];
+                      const itemPrice = menuItem 
+                        ? (orderType === "dine_in" ? parseFloat(menuItem.price_dine_in) : parseFloat(menuItem.price_takeaway))
+                        : item.price;
+                      
+                      return (
+                        <tr key={item.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div className="h-10 w-10 flex-shrink-0">
+                                <img className="h-10 w-10 rounded-full object-cover" src={item.image} alt={item.name} />
+                              </div>
+                              <div className="ml-4">
+                                <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                              </div>
                             </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{item.price.toFixed(2)} ₺</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{item.quantity}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900">{(item.price * item.quantity).toFixed(2)} ₺</div>
-                        </td>
-                      </tr>
-                    ))}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{itemPrice.toFixed(2)} ₺</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{item.quantity}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{(itemPrice * item.quantity).toFixed(2)} ₺</div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                   <tfoot className="bg-gray-50">
                     <tr>
@@ -182,7 +243,7 @@ const Order = () => {
                         Toplam Tutar:
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-lg font-bold text-restaurant-700">{getTotalPrice().toFixed(2)} ₺</div>
+                        <div className="text-lg font-bold text-restaurant-700">{orderTotal.toFixed(2)} ₺</div>
                       </td>
                     </tr>
                   </tfoot>

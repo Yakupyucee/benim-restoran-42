@@ -32,9 +32,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Kullanıcı bilgilerini local storage'dan kontrol et
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      const parsedUser = JSON.parse(storedUser);
-      setUser(parsedUser);
-      setIsAuthenticated(true);
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("User parsing error:", error);
+        localStorage.removeItem("user");
+      }
     }
     setIsLoading(false);
   }, []);
@@ -55,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           token: response.access
         };
         
+        localStorage.setItem("user", JSON.stringify(userData));
         setUser(userData);
         setIsAuthenticated(true);
         toast.success("Giriş başarılı!");
@@ -105,12 +111,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await authAPI.logout();
+      localStorage.removeItem("user");
       setUser(null);
       setIsAuthenticated(false);
       toast.info("Çıkış yapıldı");
     } catch (error) {
       console.error("Logout error:", error);
       toast.error("Çıkış yapılırken bir hata oluştu!");
+      // Hata olsa bile kullanıcıyı çıkış yapmış say
+      localStorage.removeItem("user");
+      setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setIsLoading(false);
     }

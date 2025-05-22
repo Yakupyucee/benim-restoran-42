@@ -1,162 +1,177 @@
 
 import React from "react";
 import { MainLayout } from "@/layouts/main-layout";
-import { Link } from "react-router-dom";
-import { menuItems, getPopularItems } from "@/data/menu-data";
 import { Button } from "@/components/ui/button";
-import { useCart } from "@/hooks/use-cart";
+import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/use-auth";
+import { Utensils, Coffee, ShoppingCart, Settings } from "lucide-react";
 
 const Index = () => {
-  const popularItems = getPopularItems();
-  const { addItem } = useCart();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <MainLayout>
       {/* Hero Section */}
-      <section className="bg-restaurant-700 text-white rounded-lg p-8 md:p-12 mb-8">
-        <div className="container mx-auto flex flex-col md:flex-row items-center">
-          <div className="md:w-1/2 mb-6 md:mb-0">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Benim Restoranım'a Hoş Geldiniz</h1>
-            <p className="text-xl mb-6">
-              Lezzetli yemekler, kaliteli hizmet ve özel tatlar sizleri bekliyor.
+      <section className="relative bg-restaurant-700 text-white py-16 px-4 sm:px-6 lg:px-8 rounded-lg overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative z-10">
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+              Lezzetli Yemekler, Hızlı Servis
+            </h1>
+            <p className="text-xl max-w-3xl mb-8">
+              En taze malzemelerle hazırlanan eşsiz lezzetleri keşfedin.
+              Restoranımızda yiyin veya eve sipariş verin.
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/menu">
                 <Button size="lg" className="bg-white text-restaurant-700 hover:bg-gray-100">
-                  Menüyü Gör
+                  Menüyü Görüntüle
                 </Button>
               </Link>
-              <Link to="/siparis">
-                <Button size="lg" variant="outline" className="border-white text-white hover:bg-restaurant-800">
-                  Sipariş Ver
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <Link to="/siparis">
+                  <Button size="lg" variant="outline" className="text-white border-white hover:bg-restaurant-600">
+                    Sipariş Ver
+                  </Button>
+                </Link>
+              ) : (
+                <Link to="/giris">
+                  <Button size="lg" variant="outline" className="text-white border-white hover:bg-restaurant-600">
+                    Giriş Yap
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
-          <div className="md:w-1/2 md:pl-8">
-            <img
-              src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=600"
-              alt="Restoran yemekleri"
-              className="rounded-lg shadow-lg"
-            />
-          </div>
         </div>
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: "url('/food-background.jpg')" }}
+        ></div>
       </section>
 
-      {/* Popüler Yemekler */}
-      <section className="mb-12">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl md:text-3xl font-bold">Popüler Yemeklerimiz</h2>
-          <Link to="/menu" className="text-restaurant-700 hover:text-restaurant-800 font-medium">
-            Tümünü Gör &rarr;
-          </Link>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {popularItems.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-lg shadow-md overflow-hidden card-hover"
-            >
-              <img
-                src={item.image}
-                alt={item.name}
-                className="w-full h-48 object-cover"
-              />
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-xl">{item.name}</h3>
-                  <span className="font-semibold text-restaurant-700">
-                    {item.price} ₺
-                  </span>
-                </div>
-                <p className="text-gray-600 mb-4 line-clamp-2">{item.description}</p>
-                <Button 
-                  className="w-full" 
-                  onClick={() => addItem({
-                    id: item.id,
-                    name: item.name,
-                    price: item.price,
-                    image: item.image
-                  })}
-                >
-                  Sepete Ekle
-                </Button>
-              </div>
+      {/* Role-based Features Section */}
+      {isAuthenticated && (
+        <section className="py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-3xl font-bold text-gray-900 mb-8">
+              Hoş geldiniz, {user?.name}!
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Admin için özel kartlar */}
+              {user?.role === "admin" ? (
+                <>
+                  <div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="p-6">
+                      <div className="w-12 h-12 bg-restaurant-100 rounded-lg flex items-center justify-center mb-4">
+                        <Settings className="h-6 w-6 text-restaurant-700" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Admin Paneli</h3>
+                      <p className="text-gray-600 mb-4">
+                        Restoran ve menü yönetimi için admin paneline erişin.
+                      </p>
+                      <Link to="/admin">
+                        <Button className="w-full">
+                          Panele Git
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="p-6">
+                      <div className="w-12 h-12 bg-restaurant-100 rounded-lg flex items-center justify-center mb-4">
+                        <Utensils className="h-6 w-6 text-restaurant-700" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Menü Yönetimi</h3>
+                      <p className="text-gray-600 mb-4">
+                        Yeni yemekler ekleyin, mevcut yemekleri düzenleyin veya silin.
+                      </p>
+                      <Link to="/admin/menu">
+                        <Button className="w-full">
+                          Menüyü Yönet
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="p-6">
+                      <div className="w-12 h-12 bg-restaurant-100 rounded-lg flex items-center justify-center mb-4">
+                        <ShoppingCart className="h-6 w-6 text-restaurant-700" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Sipariş Yönetimi</h3>
+                      <p className="text-gray-600 mb-4">
+                        Gelen siparişleri görüntüleyin ve durumlarını güncelleyin.
+                      </p>
+                      <Link to="/admin/siparisler">
+                        <Button className="w-full">
+                          Siparişleri Yönet
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Normal kullanıcılar için kartlar */}
+                  <div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="p-6">
+                      <div className="w-12 h-12 bg-restaurant-100 rounded-lg flex items-center justify-center mb-4">
+                        <Coffee className="h-6 w-6 text-restaurant-700" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Menüyü Keşfedin</h3>
+                      <p className="text-gray-600 mb-4">
+                        Restoranımızın zengin menüsünü keşfedin ve favori yemeklerinizi bulun.
+                      </p>
+                      <Link to="/menu">
+                        <Button className="w-full">
+                          Menüye Git
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="p-6">
+                      <div className="w-12 h-12 bg-restaurant-100 rounded-lg flex items-center justify-center mb-4">
+                        <ShoppingCart className="h-6 w-6 text-restaurant-700" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Sipariş Verin</h3>
+                      <p className="text-gray-600 mb-4">
+                        Eve teslim veya restoranda yemek için hemen sipariş verin.
+                      </p>
+                      <Link to="/siparis">
+                        <Button className="w-full">
+                          Sipariş Ver
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <div className="p-6">
+                      <div className="w-12 h-12 bg-restaurant-100 rounded-lg flex items-center justify-center mb-4">
+                        <Utensils className="h-6 w-6 text-restaurant-700" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Profiliniz</h3>
+                      <p className="text-gray-600 mb-4">
+                        Profil bilgilerinizi görüntüleyin ve sipariş geçmişinize bakın.
+                      </p>
+                      <Link to="/profil">
+                        <Button className="w-full">
+                          Profile Git
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Özellikler */}
-      <section className="mb-12">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6 text-center">Neden Biz?</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow text-center">
-            <div className="text-4xl text-restaurant-700 mb-3">🍽️</div>
-            <h3 className="text-xl font-bold mb-2">Taze Malzemeler</h3>
-            <p className="text-gray-600">
-              Günlük taze malzemeler ile hazırlanan özel lezzetler
-            </p>
           </div>
-          <div className="bg-white p-6 rounded-lg shadow text-center">
-            <div className="text-4xl text-restaurant-700 mb-3">🚚</div>
-            <h3 className="text-xl font-bold mb-2">Hızlı Teslimat</h3>
-            <p className="text-gray-600">
-              30 dakika içinde kapınızda veya paranız iade
-            </p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow text-center">
-            <div className="text-4xl text-restaurant-700 mb-3">💳</div>
-            <h3 className="text-xl font-bold mb-2">Güvenli Ödeme</h3>
-            <p className="text-gray-600">
-              Güvenli ödeme seçenekleri ile kolayca ödeme yapın
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* Kampanya Banner */}
-      <section className="bg-restaurant-50 border border-restaurant-100 rounded-lg p-6 mb-12">
-        <div className="text-center">
-          <span className="inline-block bg-restaurant-700 text-white text-sm font-medium px-3 py-1 rounded-full mb-3">
-            ÖZEL TEKLİF
-          </span>
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            İlk Siparişinize Özel %15 İndirim
-          </h2>
-          <p className="text-lg text-gray-600 mb-6 max-w-2xl mx-auto">
-            Yeni üye olan müşterilerimize ilk siparişlerinde geçerli %15 indirim sunuyoruz. Hemen kayıt olun ve bu fırsatı kaçırmayın!
-          </p>
-          <Link to="/kayit">
-            <Button size="lg">Şimdi Kayıt Ol</Button>
-          </Link>
-        </div>
-      </section>
-
-      {/* Müşteri Yorumları */}
-      <section className="mb-12">
-        <h2 className="text-2xl md:text-3xl font-bold mb-6">Müşteri Yorumları</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center text-restaurant-500 mb-2">
-              ★★★★★
-            </div>
-            <p className="text-gray-600 italic mb-4">
-              "İnanılmaz lezzetli yemekler ve çok hızlı servis. Özellikle ızgara köfte favorim oldu. Kesinlikle tekrar geleceğim."
-            </p>
-            <div className="font-semibold">Ahmet Y.</div>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center text-restaurant-500 mb-2">
-              ★★★★★
-            </div>
-            <p className="text-gray-600 italic mb-4">
-              "Eve siparişimiz çok hızlı geldi ve yemekler hala sıcaktı. Baklava ise gerçekten harika. Teşekkürler!"
-            </p>
-            <div className="font-semibold">Ayşe K.</div>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </MainLayout>
   );
 };

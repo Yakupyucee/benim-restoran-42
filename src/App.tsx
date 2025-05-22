@@ -26,13 +26,39 @@ const queryClient = new QueryClient();
 
 // Kullanıcı rolüne göre route koruma bileşeni
 const ProtectedRoute = ({ children, requiredRole }: { children: React.ReactNode, requiredRole?: "admin" | "user" }) => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isLoading } = useAuth();
   
+  // Yükleme sırasında bir şey görüntüleme
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-restaurant-700"></div>
+    </div>;
+  }
+  
+  // Kimlik doğrulama yapılmamışsa giriş sayfasına yönlendir
   if (!isAuthenticated) {
     return <Navigate to="/giris" replace />;
   }
   
+  // Eğer belirli bir rol gerekiyorsa ve kullanıcının rolü uyuşmuyorsa
   if (requiredRole && user?.role !== requiredRole) {
+    return <Navigate to="/" replace />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Kullanıcı zaten giriş yapmışsa ana sayfaya yönlendiren bileşen
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-restaurant-700"></div>
+    </div>;
+  }
+  
+  if (isAuthenticated) {
     return <Navigate to="/" replace />;
   }
   
@@ -49,8 +75,16 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/giris" element={<Login />} />
-              <Route path="/kayit" element={<Register />} />
+              <Route path="/giris" element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              } />
+              <Route path="/kayit" element={
+                <PublicRoute>
+                  <Register />
+                </PublicRoute>
+              } />
               <Route path="/menu" element={<Menu />} />
               <Route path="/menu/:foodId" element={<MenuDetail />} />
               <Route path="/sepet" element={<Cart />} />
