@@ -6,6 +6,8 @@ import { useCart } from "@/hooks/use-cart";
 import { Badge } from "@/components/ui/badge";
 import { menuAPI, reviewAPI } from "@/services/api";
 import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { Star } from "lucide-react";
 
 interface MenuItem {
   food_id: string;
@@ -23,11 +25,16 @@ interface Category {
   name: string;
 }
 
+interface FoodRatings {
+  [key: string]: number;
+}
+
 const Menu = () => {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("");
   const [loading, setLoading] = useState(true);
+  const [foodRatings, setFoodRatings] = useState<FoodRatings>({});
   const { addItem } = useCart();
 
   useEffect(() => {
@@ -64,6 +71,36 @@ const Menu = () => {
     fetchMenu();
   }, []);
 
+  // Her kategoriye göre ilk birkaç yemeğin puanlarını al
+  useEffect(() => {
+    const fetchRatings = async () => {
+      try {
+        const ratingsObj: FoodRatings = {};
+        
+        // Sadece görüntülenen kategorideki yemekler için yorum derecelerini getir
+        const visibleItems = menuItems.filter(item => item.category === activeCategory && item.availability);
+        
+        for (const item of visibleItems) {
+          try {
+            const reviewData = await reviewAPI.getReviewsByFoodId(item.food_id);
+            ratingsObj[item.food_id] = reviewData.average_rating;
+          } catch (error) {
+            console.error(`${item.food_id} için puanlar alınamadı:`, error);
+            ratingsObj[item.food_id] = 0;
+          }
+        }
+        
+        setFoodRatings(ratingsObj);
+      } catch (error) {
+        console.error("Puanlar alınırken hata:", error);
+      }
+    };
+
+    if (activeCategory && menuItems.length > 0) {
+      fetchRatings();
+    }
+  }, [activeCategory, menuItems]);
+
   // Seçili kategoriye göre menü öğelerini filtrele
   const categoryItems = activeCategory
     ? menuItems.filter((item) => item.category === activeCategory && item.availability)
@@ -78,6 +115,8 @@ const Menu = () => {
       price: parseFloat(item.price_dine_in),
       image: item.image || "/placeholder.svg"
     });
+    
+    toast.success(`${item.name} sepete eklendi`);
   };
 
   return (
@@ -129,14 +168,18 @@ const Menu = () => {
                     key={item.food_id}
                     className="bg-white rounded-lg shadow overflow-hidden card-hover"
                   >
-                    <img
-                      src={item.image || "/placeholder.svg"}
-                      alt={item.name}
-                      className="w-full h-48 object-cover"
-                    />
+                    <Link to={`/menu/${item.food_id}`}>
+                      <img
+                        src={item.image || "/placeholder.svg"}
+                        alt={item.name}
+                        className="w-full h-48 object-cover cursor-pointer"
+                      />
+                    </Link>
                     <div className="p-5">
                       <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-bold text-xl">{item.name}</h3>
+                        <Link to={`/menu/${item.food_id}`} className="hover:text-restaurant-700">
+                          <h3 className="font-bold text-xl">{item.name}</h3>
+                        </Link>
                         <div className="text-right">
                           <span className="font-semibold text-restaurant-700">
                             {parseFloat(item.price_dine_in).toFixed(2)} ₺
@@ -149,9 +192,28 @@ const Menu = () => {
                         </div>
                       </div>
                       
-                      <p className="text-gray-600 mb-4">{item.description}</p>
+                      {foodRatings[item.food_id] !== undefined && (
+                        <div className="flex items-center mb-2">
+                          <div className="flex space-x-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <Star 
+                                key={star} 
+                                className={`h-4 w-4 ${star <= foodRatings[item.food_id] ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                              />
+                            ))}
+                          </div>
+                          <span className="ml-2 text-xs text-gray-500">
+                            ({foodRatings[item.food_id].toFixed(1)})
+                          </span>
+                        </div>
+                      )}
                       
-                      <div className="flex justify-end items-center mt-4">
+                      <p className="text-gray-600 mb-4 line-clamp-2">{item.description}</p>
+                      
+                      <div className="flex justify-between items-center mt-4">
+                        <Link to={`/menu/${item.food_id}`}>
+                          <Button variant="outline" size="sm">Detaylar</Button>
+                        </Link>
                         <Button
                           onClick={() => handleAddToCart(item)}
                         >
