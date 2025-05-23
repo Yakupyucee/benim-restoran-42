@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/layouts/main-layout";
 import { useAuth } from "@/hooks/use-auth";
-import { orderAPI, menuAPI } from "@/services/api";
+import { orderAPI, menuAPI, addressAPI } from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -21,7 +21,7 @@ interface OrderItem {
   food_id: string;
   quantity: number;
   price: string;
-  name?: string; // Yemek adını tutacak alan ekledik
+  name?: string; // Yemek adını tutacak alan
 }
 
 interface Order {
@@ -36,6 +36,7 @@ interface Order {
   created_at: string;
   updated_at: string;
   items: OrderItem[];
+  address_street?: string; // Adres bilgisini tutacak alan
 }
 
 interface MenuItem {
@@ -49,10 +50,20 @@ interface MenuItem {
   availability: boolean;
 }
 
+interface Address {
+  address_id: string;
+  user_id: string;
+  street: string;
+  city: string;
+  zip_code: string;
+  created_at: string;
+}
+
 const AdminOrders = () => {
   const { isAuthenticated, user } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [menuItems, setMenuItems] = useState<{[key: string]: MenuItem}>({});
+  const [addresses, setAddresses] = useState<{[key: string]: Address}>({});
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
@@ -60,8 +71,9 @@ const AdminOrders = () => {
   const [statusToUpdate, setStatusToUpdate] = useState<"pending" | "preparing" | "completed" | "cancelled">("pending");
 
   useEffect(() => {
-    fetchOrders();
     fetchMenuItems();
+    fetchAddresses();
+    fetchOrders();
   }, []);
 
   const fetchMenuItems = async () => {
@@ -78,12 +90,26 @@ const AdminOrders = () => {
     }
   };
 
+  const fetchAddresses = async () => {
+    try {
+      const data = await addressAPI.getAllAddresses();
+      const addressMap = data.reduce((acc: {[key: string]: Address}, item: Address) => {
+        acc[item.address_id] = item;
+        return acc;
+      }, {});
+      setAddresses(addressMap);
+    } catch (error) {
+      console.error("Adresler yüklenirken hata:", error);
+      toast.error("Adresler yüklenirken bir hata oluştu");
+    }
+  };
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
       const data = await orderAPI.getAllOrders();
       
-      // Siparişleri zenginleştir ve food_id'ye göre isim ekle
+      // Siparişleri zenginleştir - yemek isimleri ve adres bilgileri ekle
       const enrichedOrders = data.map((order: Order) => {
         const enrichedItems = order.items.map(item => ({
           ...item,
@@ -92,7 +118,8 @@ const AdminOrders = () => {
         
         return {
           ...order,
-          items: enrichedItems
+          items: enrichedItems,
+          address_street: order.delivery_address ? addresses[order.delivery_address]?.street || "Bilinmeyen Adres" : null
         };
       });
       
@@ -104,6 +131,13 @@ const AdminOrders = () => {
       setLoading(false);
     }
   };
+
+  // Menü öğeleri ve adresler yüklendikten sonra siparişleri yeniden fetch et
+  useEffect(() => {
+    if (Object.keys(menuItems).length > 0 && Object.keys(addresses).length > 0) {
+      fetchOrders();
+    }
+  }, [menuItems, addresses]);
 
   const openStatusUpdateDialog = (order: Order) => {
     setSelectedOrder(order);
@@ -218,9 +252,6 @@ const AdminOrders = () => {
                         <thead className="bg-gray-50">
                           <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Sipariş ID
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Tarih
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -243,11 +274,6 @@ const AdminOrders = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {activeDineInOrders.map((order) => (
                             <tr key={order.order_id}>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {order.order_id.substring(0, 8)}...
-                                </div>
-                              </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-500">
                                   {formatDate(order.created_at)}
@@ -311,9 +337,6 @@ const AdminOrders = () => {
                         <thead className="bg-gray-50">
                           <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Sipariş ID
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Tarih
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -336,11 +359,6 @@ const AdminOrders = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                           {inactiveDineInOrders.map((order) => (
                             <tr key={order.order_id}>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {order.order_id.substring(0, 8)}...
-                                </div>
-                              </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-500">
                                   {formatDate(order.created_at)}
@@ -398,13 +416,10 @@ const AdminOrders = () => {
                         <thead className="bg-gray-50">
                           <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Sipariş ID
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Tarih
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Adres ID
+                              Adres
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Toplam Tutar
@@ -424,18 +439,13 @@ const AdminOrders = () => {
                           {activeTakeawayOrders.map((order) => (
                             <tr key={order.order_id}>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {order.order_id.substring(0, 8)}...
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-500">
                                   {formatDate(order.created_at)}
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-500">
-                                  {order.delivery_address ? order.delivery_address.substring(0, 8) + "..." : "N/A"}
+                                  {order.address_street || "N/A"}
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
@@ -491,13 +501,10 @@ const AdminOrders = () => {
                         <thead className="bg-gray-50">
                           <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Sipariş ID
-                            </th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Tarih
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                              Adres ID
+                              Adres
                             </th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                               Toplam Tutar
@@ -517,18 +524,13 @@ const AdminOrders = () => {
                           {inactiveTakeawayOrders.map((order) => (
                             <tr key={order.order_id}>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="text-sm font-medium text-gray-900">
-                                  {order.order_id.substring(0, 8)}...
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-500">
                                   {formatDate(order.created_at)}
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-500">
-                                  {order.delivery_address ? order.delivery_address.substring(0, 8) + "..." : "N/A"}
+                                  {order.address_street || "N/A"}
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
@@ -574,7 +576,7 @@ const AdminOrders = () => {
           <DialogHeader>
             <DialogTitle>Sipariş Detayları</DialogTitle>
             <DialogDescription>
-              Sipariş #{selectedOrder?.order_id?.substring(0, 8)} detayları
+              Sipariş detayları
             </DialogDescription>
           </DialogHeader>
           
@@ -603,10 +605,10 @@ const AdminOrders = () => {
                       </>
                     )}
                     
-                    {selectedOrder.order_type === "takeaway" && selectedOrder.delivery_address && (
+                    {selectedOrder.order_type === "takeaway" && selectedOrder.address_street && (
                       <>
-                        <div className="text-gray-600">Adres ID:</div>
-                        <div>{selectedOrder.delivery_address}</div>
+                        <div className="text-gray-600">Adres:</div>
+                        <div>{selectedOrder.address_street}</div>
                       </>
                     )}
                   </div>
@@ -659,7 +661,7 @@ const AdminOrders = () => {
           <DialogHeader>
             <DialogTitle>Sipariş Durumunu Güncelle</DialogTitle>
             <DialogDescription>
-              Sipariş #{selectedOrder?.order_id.substring(0, 8)} için yeni bir durum seçin.
+              Sipariş için yeni bir durum seçin.
             </DialogDescription>
           </DialogHeader>
           
