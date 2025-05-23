@@ -21,7 +21,7 @@ interface OrderItem {
   food_id: string;
   quantity: number;
   price: string;
-  name?: string; // Yemek adını tutacak alan ekledik
+  name?: string; // Yemek adını tutacak alan
 }
 
 interface Order {
@@ -29,6 +29,7 @@ interface Order {
   user_id: string;
   total_price: string;
   delivery_address: string | null;
+  delivery_address_detail?: string; // Adres detayını tutacak yeni alan
   table_number: number | null;
   order_type: "dine_in" | "takeaway";
   order_status: "pending" | "preparing" | "completed" | "cancelled";
@@ -99,8 +100,9 @@ const Profile = () => {
       }, {});
       setMenuItems(menuMap);
       
-      // Siparişlerdeki ürünlere isim ekle
-      const ordersWithFoodNames = ordersData.map((order: Order) => {
+      // Siparişlerdeki ürünlere isim ekle ve adres detaylarını getir
+      const enhancedOrders = await Promise.all(ordersData.map(async (order: Order) => {
+        // Ürün isimlerini ekle
         const itemsWithNames = order.items.map(item => {
           const menuItem = menuMap[item.food_id];
           return {
@@ -108,13 +110,26 @@ const Profile = () => {
             name: menuItem ? menuItem.name : "Bilinmeyen Ürün"
           };
         });
+        
+        // Teslimat adresi varsa adres detayını getir
+        let addressDetail = "";
+        if (order.order_type === "takeaway" && order.delivery_address) {
+          try {
+            const addressData = await addressAPI.getAddress(order.delivery_address);
+            addressDetail = addressData.street;
+          } catch (error) {
+            console.error("Adres detayı alınamadı:", error);
+          }
+        }
+        
         return {
           ...order,
-          items: itemsWithNames
+          items: itemsWithNames,
+          delivery_address_detail: addressDetail
         };
-      });
+      }));
       
-      setOrders(ordersWithFoodNames);
+      setOrders(enhancedOrders);
     } catch (error) {
       console.error("Kullanıcı verileri yüklenirken hata:", error);
       toast.error("Kullanıcı bilgileriniz yüklenemedi");
@@ -476,10 +491,6 @@ const Profile = () => {
                                 <div key={order.order_id} className="border rounded-lg overflow-hidden">
                                   <div className="bg-gray-50 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                     <div>
-                                      <div className="flex items-center mb-1">
-                                        <span className="font-semibold mr-2">Sipariş No:</span>
-                                        <span>{order.order_id.substring(0, 8)}...</span>
-                                      </div>
                                       <div className="flex items-center">
                                         <span className="text-gray-600 text-sm">
                                           {formatDate(order.created_at)}
@@ -513,9 +524,9 @@ const Profile = () => {
                                         {order.order_type === "dine_in" && order.table_number && (
                                           <p className="text-gray-600 text-sm">Masa: {order.table_number}</p>
                                         )}
-                                        {order.order_type === "takeaway" && order.delivery_address && (
+                                        {order.order_type === "takeaway" && order.delivery_address_detail && (
                                           <p className="text-gray-600 text-sm">
-                                            Adres ID: {order.delivery_address}
+                                            Adres: {order.delivery_address_detail}
                                           </p>
                                         )}
                                       </div>
@@ -545,10 +556,6 @@ const Profile = () => {
                                 <div key={order.order_id} className="border rounded-lg overflow-hidden">
                                   <div className="bg-gray-50 p-4 flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                     <div>
-                                      <div className="flex items-center mb-1">
-                                        <span className="font-semibold mr-2">Sipariş No:</span>
-                                        <span>{order.order_id.substring(0, 8)}...</span>
-                                      </div>
                                       <div className="flex items-center">
                                         <span className="text-gray-600 text-sm">
                                           {formatDate(order.created_at)}
@@ -582,9 +589,9 @@ const Profile = () => {
                                         {order.order_type === "dine_in" && order.table_number && (
                                           <p className="text-gray-600 text-sm">Masa: {order.table_number}</p>
                                         )}
-                                        {order.order_type === "takeaway" && order.delivery_address && (
+                                        {order.order_type === "takeaway" && order.delivery_address_detail && (
                                           <p className="text-gray-600 text-sm">
-                                            Adres ID: {order.delivery_address}
+                                            Adres: {order.delivery_address_detail}
                                           </p>
                                         )}
                                       </div>

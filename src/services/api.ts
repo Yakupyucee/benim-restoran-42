@@ -1,7 +1,7 @@
 
 import { toast } from "sonner";
 
-const API_BASE_URL = "https://450f-109-228-207-11.ngrok-free.app";
+const API_BASE_URL = "http://127.0.0.1:8005";
 
 // LocalStorage'dan token alma fonksiyonu
 const getToken = (): string | null => {
