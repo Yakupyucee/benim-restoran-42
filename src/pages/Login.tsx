@@ -93,20 +93,6 @@ const Login = () => {
               </p>
             </div>
           </form>
-
-          <div className="mt-6 border-t pt-6">
-            <p className="text-center text-gray-600 text-sm mb-4">
-              Demo Kullanıcılar:
-            </p>
-            <div className="bg-gray-50 p-4 rounded-md text-sm">
-              <p className="mb-2">
-                <strong>Kullanıcı:</strong> tempuser7@gmail.com / Guclu_Sifre123
-              </p>
-              <p>
-                <strong>Admin:</strong> tempuser8@gmail.com / Guclu_Sifre123
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </MainLayout>

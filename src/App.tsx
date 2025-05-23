@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -21,6 +20,9 @@ import Admin from "./pages/Admin";
 import AdminMenu from "./pages/AdminMenu";
 import AdminOrders from "./pages/AdminOrders";
 import Order from "./pages/Order";
+import PasswordReset from "./pages/PasswordReset";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 const queryClient = new QueryClient();
 
@@ -85,6 +87,13 @@ const App = () => (
                   <Register />
                 </PublicRoute>
               } />
+              <Route path="/sifre-sifirlama" element={
+                <PublicRoute>
+                  <PasswordReset />
+                </PublicRoute>
+              } />
+              <Route path="/kullanim-kosullari" element={<TermsOfService />} />
+              <Route path="/gizlilik-politikasi" element={<PrivacyPolicy />} />
               <Route path="/menu" element={<Menu />} />
               <Route path="/menu/:foodId" element={<MenuDetail />} />
               <Route path="/sepet" element={<Cart />} />
