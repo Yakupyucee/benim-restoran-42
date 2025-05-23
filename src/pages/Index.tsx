@@ -15,6 +15,10 @@ const Index = () => {
       <section className="relative bg-restaurant-700 text-white py-16 px-4 sm:px-6 lg:px-8 rounded-lg overflow-hidden">
         <div className="max-w-7xl mx-auto">
           <div className="relative z-10">
+            <div className="flex items-center justify-center mb-6">
+              <span className="text-4xl md:text-5xl font-bold text-white italic">Benim</span>
+              <span className="text-4xl md:text-5xl font-light text-white ml-2">Restoranım</span>
+            </div>
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
               Lezzetli Yemekler, Hızlı Servis
             </h1>

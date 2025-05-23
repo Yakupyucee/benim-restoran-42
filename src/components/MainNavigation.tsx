@@ -3,7 +3,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
 import { useCart } from "@/hooks/use-cart";
-import { ShoppingCart, User, LogOut, Home, List, Coffee, Settings } from "lucide-react";
+import { ShoppingCart, User, LogOut, Home, List, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const MainNavigation = () => {
@@ -25,8 +25,8 @@ const MainNavigation = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
-              <Coffee className="h-8 w-8 text-restaurant-700" />
-              <span className="ml-2 text-xl font-bold text-restaurant-700">RestaurantApp</span>
+              <span className="text-2xl font-bold text-restaurant-700">B</span>
+              <span className="text-2xl font-light text-restaurant-700">R</span>
             </Link>
             <div className="hidden md:ml-6 md:flex md:space-x-4">
               <Link
