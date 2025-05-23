@@ -30,13 +30,13 @@ const Index = () => {
               </Link>
               {isAuthenticated ? (
                 <Link to="/siparis">
-                  <Button size="lg" variant="outline" className="text-white border-white hover:bg-restaurant-600">
+                  <Button size="lg" variant="outline" className="text-red-500 border-white hover:bg-restaurant-600">
                     Sipariş Ver
                   </Button>
                 </Link>
               ) : (
                 <Link to="/giris">
-                  <Button size="lg" variant="outline" className="text-white border-white hover:bg-restaurant-600">
+                  <Button size="lg" variant="outline" className="text-red-500 border-white hover:bg-restaurant-600">
                     Giriş Yap
                   </Button>
                 </Link>

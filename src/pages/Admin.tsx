@@ -31,30 +31,6 @@ const Admin = () => {
             <p className="text-gray-600 mb-4">Gelen siparişleri görüntüleyin ve durumlarını güncelleyin.</p>
             <Button onClick={() => navigate("/admin/siparisler")}>Siparişleri Yönet</Button>
           </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-            <h2 className="text-xl font-bold mb-4">Kullanıcılar</h2>
-            <p className="text-gray-600 mb-4">Kullanıcı hesaplarını ve bilgilerini yönetin.</p>
-            <Button onClick={() => navigate("/admin/kullanicilar")} variant="outline">Yakında</Button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-            <h2 className="text-xl font-bold mb-4">Raporlar</h2>
-            <p className="text-gray-600 mb-4">Satış, ürün ve müşteri istatistiklerini görüntüleyin.</p>
-            <Button onClick={() => navigate("/admin/raporlar")} variant="outline">Yakında</Button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-            <h2 className="text-xl font-bold mb-4">İndirimler ve Kampanyalar</h2>
-            <p className="text-gray-600 mb-4">Özel indirimler ve kampanyalar oluşturun.</p>
-            <Button onClick={() => navigate("/admin/kampanyalar")} variant="outline">Yakında</Button>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow">
-            <h2 className="text-xl font-bold mb-4">Ayarlar</h2>
-            <p className="text-gray-600 mb-4">Sistem ayarlarını yönetin ve yapılandırın.</p>
-            <Button onClick={() => navigate("/admin/ayarlar")} variant="outline">Yakında</Button>
-          </div>
         </div>
       </div>
     </MainLayout>

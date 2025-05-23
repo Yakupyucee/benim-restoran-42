@@ -116,7 +116,7 @@ const Cart = () => {
                     <span>{(getTotalPrice() + 10).toFixed(2)} ₺</span>
                   </div>
                 </div>
-                <Link to="/odeme">
+                <Link to="/siparis">
                   <Button className="w-full">Siparişi Tamamla</Button>
                 </Link>
               </div>
