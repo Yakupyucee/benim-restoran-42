@@ -28,16 +28,16 @@ const Login = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-md mx-auto">
+      <div className="max-w-md mx-auto" data-testid="login-container">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold">Giriş Yap</h1>
+          <h1 className="text-3xl font-bold" data-testid="login-title">Giriş Yap</h1>
           <p className="text-gray-600 mt-2">
             Hesabınıza giriş yaparak siparişlerinizi takip edebilirsiniz.
           </p>
         </div>
 
         <div className="bg-white p-8 rounded-lg shadow-md">
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="login-form">
             <div className="mb-6">
               <label
                 htmlFor="email"
@@ -53,6 +53,7 @@ const Login = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-restaurant-700"
                 placeholder="ornek@gmail.com"
                 required
+                data-testid="email-input"
               />
             </div>
 
@@ -61,7 +62,7 @@ const Login = () => {
                 <label htmlFor="password" className="block text-gray-700 font-medium">
                   Şifre
                 </label>
-                <Link to="/sifre-sifirlama" className="text-sm text-restaurant-700 hover:text-restaurant-800">
+                <Link to="/sifre-sifirlama" className="text-sm text-restaurant-700 hover:text-restaurant-800" data-testid="forgot-password-link">
                   Şifremi unuttum
                 </Link>
               </div>
@@ -73,6 +74,7 @@ const Login = () => {
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-restaurant-700"
                 placeholder="••••••••"
                 required
+                data-testid="password-input"
               />
             </div>
 
@@ -80,6 +82,7 @@ const Login = () => {
               type="submit"
               className="w-full mb-4"
               disabled={isSubmitting}
+              data-testid="login-submit-button"
             >
               {isSubmitting ? "Giriş yapılıyor..." : "Giriş Yap"}
             </Button>
@@ -87,7 +90,7 @@ const Login = () => {
             <div className="text-center text-gray-600 text-sm">
               <p>
                 Hesabınız yok mu?{" "}
-                <Link to="/kayit" className="text-restaurant-700 font-medium hover:text-restaurant-800">
+                <Link to="/kayit" className="text-restaurant-700 font-medium hover:text-restaurant-800" data-testid="register-link">
                   Kayıt Ol
                 </Link>
               </p>
