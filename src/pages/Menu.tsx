@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { MainLayout } from "@/layouts/main-layout";
 import { Button } from "@/components/ui/button";
@@ -54,12 +53,12 @@ const Menu = () => {
         }));
 
         setCategories(uniqueCategories);
-        
+
         // İlk kategoriyi aktif olarak ayarla
         if (uniqueCategories.length > 0 && !activeCategory) {
           setActiveCategory(uniqueCategories[0].id);
         }
-        
+
         setLoading(false);
       } catch (error) {
         console.error("Menü yüklenirken hata:", error);
@@ -76,10 +75,12 @@ const Menu = () => {
     const fetchRatings = async () => {
       try {
         const ratingsObj: FoodRatings = {};
-        
+
         // Sadece görüntülenen kategorideki yemekler için yorum derecelerini getir
-        const visibleItems = menuItems.filter(item => item.category === activeCategory && item.availability);
-        
+        const visibleItems = menuItems.filter(
+          (item) => item.category === activeCategory && item.availability
+        );
+
         for (const item of visibleItems) {
           try {
             const reviewData = await reviewAPI.getReviewsByFoodId(item.food_id);
@@ -89,7 +90,7 @@ const Menu = () => {
             ratingsObj[item.food_id] = 0;
           }
         }
-        
+
         setFoodRatings(ratingsObj);
       } catch (error) {
         console.error("Puanlar alınırken hata:", error);
@@ -103,7 +104,9 @@ const Menu = () => {
 
   // Seçili kategoriye göre menü öğelerini filtrele
   const categoryItems = activeCategory
-    ? menuItems.filter((item) => item.category === activeCategory && item.availability)
+    ? menuItems.filter(
+        (item) => item.category === activeCategory && item.availability
+      )
     : [];
 
   const activeTab = categories.find((cat) => cat.id === activeCategory);
@@ -113,9 +116,9 @@ const Menu = () => {
       id: item.food_id,
       name: item.name,
       price: parseFloat(item.price_dine_in),
-      image: item.image || "/placeholder.svg"
+      image: item.image || "/placeholder.svg",
     });
-    
+
     toast.success(`${item.name} sepete eklendi`);
   };
 
@@ -123,9 +126,12 @@ const Menu = () => {
     <MainLayout>
       <div className="max-w-7xl mx-auto">
         <h1 className="text-3xl md:text-4xl font-bold mb-8">Menümüz</h1>
-        
+
         {loading ? (
-          <div className="flex justify-center items-center h-64">
+          <div
+            className="flex justify-center items-center h-64"
+            data-testid="loading-spinner"
+          >
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-restaurant-700"></div>
           </div>
         ) : (
@@ -148,14 +154,14 @@ const Menu = () => {
                 ))}
               </div>
             </div>
-            
+
             {/* Kategori başlığı */}
             {activeTab && (
               <div className="mb-8">
                 <h2 className="text-2xl font-bold mb-2">{activeTab.name}</h2>
               </div>
             )}
-            
+
             {/* Menü öğeleri */}
             {categoryItems.length === 0 ? (
               <div className="text-center py-8">
@@ -177,28 +183,45 @@ const Menu = () => {
                     </Link>
                     <div className="p-5">
                       <div className="flex justify-between items-start mb-2">
-                        <Link to={`/menu/${item.food_id}`} className="hover:text-restaurant-700">
+                        <Link
+                          to={`/menu/${item.food_id}`}
+                          className="hover:text-restaurant-700"
+                        >
                           <h3 className="font-bold text-xl">{item.name}</h3>
                         </Link>
                         <div className="text-right">
                           <span className="font-semibold text-restaurant-700">
                             {parseFloat(item.price_dine_in).toFixed(2)} ₺
                           </span>
-                          {parseFloat(item.price_takeaway) < parseFloat(item.price_dine_in) && (
+                          {parseFloat(item.price_takeaway) <
+                            parseFloat(item.price_dine_in) && (
                             <div className="text-sm text-gray-500">
-                              Paket: {parseFloat(item.price_takeaway).toFixed(2)} ₺
+                              Paket:{" "}
+                              {parseFloat(item.price_takeaway).toFixed(2)} ₺
+                            </div>
+                          )}
+                          {foodRatings[item.food_id] && (
+                            <div
+                              className="text-sm text-gray-500"
+                              data-testid="food-rating"
+                            >
+                              {foodRatings[item.food_id].toFixed(1)}
                             </div>
                           )}
                         </div>
                       </div>
-                      
+
                       {foodRatings[item.food_id] !== undefined && (
                         <div className="flex items-center mb-2">
                           <div className="flex space-x-1">
                             {[1, 2, 3, 4, 5].map((star) => (
-                              <Star 
-                                key={star} 
-                                className={`h-4 w-4 ${star <= foodRatings[item.food_id] ? "fill-yellow-400 text-yellow-400" : "text-gray-300"}`}
+                              <Star
+                                key={star}
+                                className={`h-4 w-4 ${
+                                  star <= foodRatings[item.food_id]
+                                    ? "fill-yellow-400 text-yellow-400"
+                                    : "text-gray-300"
+                                }`}
                               />
                             ))}
                           </div>
@@ -207,16 +230,18 @@ const Menu = () => {
                           </span>
                         </div>
                       )}
-                      
-                      <p className="text-gray-600 mb-4 line-clamp-2">{item.description}</p>
-                      
+
+                      <p className="text-gray-600 mb-4 line-clamp-2">
+                        {item.description}
+                      </p>
+
                       <div className="flex justify-between items-center mt-4">
                         <Link to={`/menu/${item.food_id}`}>
-                          <Button variant="outline" size="sm">Detaylar</Button>
+                          <Button variant="outline" size="sm">
+                            Detaylar
+                          </Button>
                         </Link>
-                        <Button
-                          onClick={() => handleAddToCart(item)}
-                        >
+                        <Button onClick={() => handleAddToCart(item)}>
                           Sepete Ekle
                         </Button>
                       </div>

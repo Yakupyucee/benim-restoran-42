@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
@@ -51,7 +50,7 @@ const MainNavigation = () => {
                 <List className="w-4 h-4 mr-1" />
                 Menü
               </Link>
-              
+
               {/* Admin için özel bağlantılar */}
               {isAuthenticated && user?.role === "admin" && (
                 <Link
@@ -72,6 +71,7 @@ const MainNavigation = () => {
             <Link
               to="/sepet"
               className="p-2 rounded-full text-gray-600 hover:text-restaurant-700 relative"
+              aria-label="Sepet"
             >
               <ShoppingCart className="h-6 w-6" />
               {items.length > 0 && (

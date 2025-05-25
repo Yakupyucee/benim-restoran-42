@@ -4,6 +4,96 @@
 
 **URL**: https://lovable.dev/projects/2afec4ee-023b-4080-b202-ddc705935328
 
+## Test Dökümantasyonu
+
+Proje, Jest ve React Testing Library kullanılarak test edilmiştir. Testler `src/pages/__tests__` ve `src/components/__tests__` dizinlerinde bulunmaktadır.
+
+### Testleri Çalıştırma
+
+```sh
+npm test
+```
+
+### Test Kapsamı
+
+#### Register (Kayıt) Sayfası Testleri
+
+Register sayfası aşağıdaki senaryolar için test edilmiştir:
+
+1. **Form Render Testi**
+
+   - Tüm form alanlarının doğru şekilde render edildiğini kontrol eder
+   - Gerekli input alanlarının varlığını doğrular
+   - Submit butonunun varlığını kontrol eder
+
+2. **Şifre Validasyonu**
+
+   - Şifre uzunluğu kontrolü (minimum 6 karakter)
+   - Şifre eşleşme kontrolü
+   - Hata mesajlarının doğru gösterilmesi
+
+3. **Form Gönderimi**
+
+   - Form submit işleminin doğru çalışması
+   - Kullanım koşulları onayı kontrolü
+   - Başarılı kayıt sonrası yönlendirme
+
+4. **Loading State**
+   - Form gönderimi sırasında loading durumunun kontrolü
+   - Submit butonunun disabled durumu
+
+#### Login (Giriş) Sayfası Testleri
+
+Login sayfası aşağıdaki senaryolar için test edilmiştir:
+
+1. **Form Render Testi**
+
+   - Email ve şifre alanlarının varlığı
+   - Giriş yap butonunun varlığı
+
+2. **Form Gönderimi**
+   - Başarılı giriş senaryosu
+   - Hatalı giriş senaryosu
+   - Loading durumu kontrolü
+
+#### Menu (Menü) Sayfası Testleri
+
+Menü sayfası aşağıdaki senaryolar için test edilmiştir:
+
+1. **Sayfa Render Testi**
+
+   - Menü kategorilerinin listelenmesi
+   - Ürünlerin doğru kategorilerde gösterilmesi
+
+2. **Kategori Filtreleme**
+
+   - Kategori seçimi
+   - Ürünlerin kategoriye göre filtrelenmesi
+
+3. **Sepet İşlemleri**
+   - Ürün ekleme
+   - Ürün çıkarma
+   - Sepet toplamı hesaplama
+
+### Test Yazım Prensipleri
+
+1. **Test İsimlendirmesi**
+
+   - Test isimleri açıklayıcı olmalı
+   - "should" veya "when" ile başlamalı
+   - Test edilen fonksiyonaliteyi açıkça belirtmeli
+
+2. **Test Organizasyonu**
+
+   - İlgili testler describe bloğu içinde gruplandırılmalı
+   - Her test bağımsız olmalı
+   - Test öncesi gerekli setup işlemleri yapılmalı
+
+3. **Assertion Prensipleri**
+   - Her test tek bir şeyi test etmeli
+   - Beklenen sonuç açıkça belirtilmeli
+   - Hata mesajları anlaşılır olmalı
+
 ## How can I edit this code?
 
 There are several ways of editing your application.

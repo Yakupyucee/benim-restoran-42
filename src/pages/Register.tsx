@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { MainLayout } from "@/layouts/main-layout";
 import { Button } from "@/components/ui/button";
@@ -19,31 +18,51 @@ const Register = () => {
   const navigate = useNavigate();
 
   const validatePassword = () => {
-    if (password !== confirmPassword) {
-      setPasswordError("Şifreler eşleşmiyor");
-      return false;
-    }
-    
     if (password.length < 6) {
       setPasswordError("Şifre en az 6 karakter olmalıdır");
       return false;
     }
-    
+    if (password !== confirmPassword) {
+      setPasswordError("Şifreler eşleşmiyor");
+      return false;
+    }
     setPasswordError("");
     return true;
   };
 
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (confirmPassword) {
+      validatePassword();
+    }
+  };
+
+  const handleConfirmPasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setConfirmPassword(e.target.value);
+    if (password) {
+      validatePassword();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validatePassword() || !acceptTerms) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
-      const success = await register(name, email, phone, password, confirmPassword);
+      const success = await register(
+        name,
+        email,
+        phone,
+        password,
+        confirmPassword
+      );
       if (success) {
         navigate("/giris");
       }
@@ -129,7 +148,7 @@ const Register = () => {
                 type="password"
                 id="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={handlePasswordChange}
                 className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-restaurant-700"
                 placeholder="••••••••"
                 required
@@ -147,7 +166,7 @@ const Register = () => {
                 type="password"
                 id="confirmPassword"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={handleConfirmPasswordChange}
                 className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-restaurant-700 ${
                   passwordError ? "border-red-500" : "border-gray-300"
                 }`}
@@ -155,7 +174,12 @@ const Register = () => {
                 required
               />
               {passwordError && (
-                <p className="text-red-500 text-sm mt-1">{passwordError}</p>
+                <p
+                  data-testid="password-error"
+                  className="text-red-500 text-sm mt-1"
+                >
+                  {passwordError}
+                </p>
               )}
             </div>
 
@@ -203,7 +227,10 @@ const Register = () => {
             <div className="text-center text-gray-600 text-sm">
               <p>
                 Zaten hesabınız var mı?{" "}
-                <Link to="/giris" className="text-restaurant-700 font-medium hover:text-restaurant-800">
+                <Link
+                  to="/giris"
+                  className="text-restaurant-700 font-medium hover:text-restaurant-800"
+                >
                   Giriş Yap
                 </Link>
               </p>
